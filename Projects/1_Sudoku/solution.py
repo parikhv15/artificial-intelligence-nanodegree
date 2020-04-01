@@ -7,8 +7,10 @@ column_units = [cross(rows, c) for c in cols]
 square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
 unitlist = row_units + column_units + square_units
 
-# TODO: Update the unit list to add the new diagonal units
-unitlist = unitlist
+# Fetch list of left and right diagonal units
+diagonal_units = [dot(rows, cols)] + [dot(rows, cols[::-1])]
+
+unitlist = unitlist + diagonal_units
 
 
 # Must be called after all units (including diagonals) are added to the unitlist
@@ -73,8 +75,14 @@ def eliminate(values):
     dict
         The values dictionary with the assigned values eliminated from peers
     """
-    # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    solved_boxes = [box for box in values.keys() if len(values[box]) == 1]
+
+    for box in solved_boxes:
+        digit = values[box]
+        for peer in peers[box]:
+            values[peer] = values[peer].replace(digit, '')
+
+    return values
 
 
 def only_choice(values):
@@ -97,8 +105,18 @@ def only_choice(values):
     -----
     You should be able to complete this function by copying your code from the classroom
     """
-    # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+
+    # Iterate through each unit and for each unit loop through each digit from 1 to 9
+    # If this digit is present in only one box, then this is the only only_choice
+    # We replace that box's value with the only choice value
+    for unit in unitlist:
+        digits = '123456789'
+        for digit in digits:
+            digit_containing_boxes = [box for box in unit if digit in values[box]]
+            if len(digit_containing_boxes) == 1:
+                values[digit_containing_boxes[0]] = digit
+
+    return values
 
 
 def reduce_puzzle(values):
@@ -113,10 +131,24 @@ def reduce_puzzle(values):
     -------
     dict or False
         The values dictionary after continued application of the constraint strategies
-        no longer produces any changes, or False if the puzzle is unsolvable 
+        no longer produces any changes, or False if the puzzle is unsolvable
     """
-    # TODO: Copy your code from the classroom and modify it to complete this function
-    raise NotImplementedError
+    is_same = False
+
+    while not is_same:
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+
+        values = eliminate(values)
+        values = only_choice(values)
+
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+
+        is_same = solved_values_before == solved_values_after
+
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+
+    return values
 
 
 def search(values):
@@ -138,8 +170,25 @@ def search(values):
     You should be able to complete this function by copying your code from the classroom
     and extending it to call the naked twins strategy.
     """
+
+    values = reduce_puzzle(values)
+
+    if values is False:
+        return False
+
+    if all(len(values[b]) == 1 for b in boxes):
+        return values
+
+    n,s = min((len(values[s]), s) for s in boxes if len(values[s]) > 1)
+
+    for v in values[s]:
+        new_values = values.copy()
+        new_values[s] = v
+        output = search(new_values)
+        if output:
+            return output
     # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    return False
 
 
 def solve(grid):
@@ -149,7 +198,7 @@ def solve(grid):
     ----------
     grid(string)
         a string representing a sudoku grid.
-        
+
         Ex. '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
 
     Returns
