@@ -55,8 +55,31 @@ def naked_twins(values):
     Pseudocode for this algorithm on github:
     https://github.com/udacity/artificial-intelligence/blob/master/Projects/1_Sudoku/pseudocode.md
     """
-    # TODO: Implement this function!
-    raise NotImplementedError
+    
+    new_values = values.copy()
+    for units in unitlist:
+        # Build an inverted list of values.
+        inverted_values = dict()
+        for box in units:
+            value = values[box]
+            if len(value) == 2 and (value not in inverted_values or len(inverted_values[value]) == 1):
+                inverted_values.setdefault(value, list()).append(box)
+
+        # Create a list of unsolved boxes in that unit
+        unit_values = [values[box] for box in units]
+        unit_dict = dict(zip(units, unit_values))
+        unsolved_boxes = [key for key in unit_dict.keys() if len(unit_dict[key]) > 1]
+
+        for twin_value, twin_boxes in inverted_values.items():
+            if len(twin_boxes) != 2: continue
+
+            for unsolved_box in unsolved_boxes:
+                if unsolved_box in twin_boxes: continue
+
+                for digit in twin_value:
+                    new_values[unsolved_box] = new_values[unsolved_box].replace(digit, '')
+
+    return new_values
 
 
 def eliminate(values):
