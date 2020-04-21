@@ -95,10 +95,6 @@ def cross(A, B):
     """Cross product of elements in A and elements in B """
     return [x+y for x in A for y in B]
 
-def dot(A, B):
-    """Dot product of elments in A and elements in B """
-    return [x+y for x,y in zip(A,B)]
-
 
 def values2grid(values):
     """Convert the dictionary board representation to as string

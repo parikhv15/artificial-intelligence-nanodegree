@@ -7,6 +7,11 @@ column_units = [cross(rows, c) for c in cols]
 square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
 unitlist = row_units + column_units + square_units
 
+
+def dot(A, B):
+    """Dot product of elments in A and elements in B """
+    return [x+y for x,y in zip(A,B)]
+
 # Fetch list of left and right diagonal units
 diagonal_units = [dot(rows, cols)] + [dot(rows, cols[::-1])]
 
@@ -16,7 +21,6 @@ unitlist = unitlist + diagonal_units
 # Must be called after all units (including diagonals) are added to the unitlist
 units = extract_units(unitlist, boxes)
 peers = extract_peers(units, boxes)
-
 
 def naked_twins(values):
     """Eliminate values using the naked twins strategy.
@@ -55,7 +59,7 @@ def naked_twins(values):
     Pseudocode for this algorithm on github:
     https://github.com/udacity/artificial-intelligence/blob/master/Projects/1_Sudoku/pseudocode.md
     """
-    
+
     new_values = values.copy()
     for units in unitlist:
         # Build an inverted list of values.
