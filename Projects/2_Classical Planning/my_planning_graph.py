@@ -1,5 +1,5 @@
 
-from itertools import chain, combinations
+from itertools import chain, combinations, product
 from aimacode.planning import Action
 from aimacode.utils import expr
 
@@ -19,7 +19,7 @@ class ActionLayer(BaseActionLayer):
         --------
         layers.ActionNode
         """
-        return any([~effectB in actionA.effects for effectB in actionB.effects]) or any([~effectA in actionB.effects for effectA in actionA.effects])
+        return any(~effectB in actionA.effects for effectB in actionB.effects) or any(~effectA in actionB.effects for effectA in actionA.effects)
 
     def _interference(self, actionA, actionB):
         """ Return True if the effects of either action negate the preconditions of the other
@@ -32,7 +32,7 @@ class ActionLayer(BaseActionLayer):
         --------
         layers.ActionNode
         """
-        return any([~effectB in actionA.preconditions for effectB in actionB.effects]) or any([~effectA in actionB.preconditions for effectA in actionA.effects])
+        return any(~preB in actionA.effects for preB in actionB.preconditions) or any(~preA in actionB.effects for preA in actionA.preconditions)
 
     def _competing_needs(self, actionA, actionB):
         """ Return True if any preconditions of the two actions are pairwise mutex in the parent layer
@@ -46,7 +46,7 @@ class ActionLayer(BaseActionLayer):
         layers.ActionNode
         layers.BaseLayer.parent_layer
         """
-        return any([self.parent_layer.is_mutex(preA, preB) or self.parent_layer.is_mutex(preB, preA) for preA in actionA.preconditions for preB in actionB.preconditions])
+        return any(self.parent_layer.is_mutex(a, b) for a, b in product(actionA.preconditions, actionB.preconditions))
 
 
 class LiteralLayer(BaseLiteralLayer):
@@ -138,14 +138,21 @@ class PlanningGraph:
         --------
         Russell-Norvig 10.3.1 (3rd Edition)
         """
-        self.fill()
-        cost_sum = 0
-        literal_costs = self._generate_literals_cost()
-        for g in self.goal:
-            if g in literal_costs:
-                cost_sum += literal_costs[g]
+        level_sum = 0
+        i = 0
+        remaining_goals = set(self.goal)
+        while not self._is_leveled:
+            goals_at_level = set([g for g in remaining_goals if g in self.literal_layers[-1]])
+            remaining_goals = remaining_goals - goals_at_level
+            level_sum += i * len(goals_at_level)
 
-        return cost_sum
+            if len(remaining_goals) == 0:
+                 break
+
+            self._extend()
+            i += 1
+
+        return level_sum
 
     def h_maxlevel(self):
         """ Calculate the max level heuristic for the planning graph
@@ -174,14 +181,18 @@ class PlanningGraph:
         -----
         WARNING: you should expect long runtimes using this heuristic with A*
         """
-        self.fill()
-        cost_sum = 0
-        literal_costs = self._generate_literals_cost()
-        for g in self.goal:
-            if g in literal_costs and literal_costs[g] > cost_sum:
-                cost_sum = literal_costs[g]
+        level_max = 0
+        i = 0
+        while not self._is_leveled:
+            if any(not g in self.literal_layers[-1] for g in self.goal):
+                self._extend()
+                i += 1
+            else:
+                level_max = i
+                break
 
-        return cost_sum
+        return level_max
+
 
     def h_setlevel(self):
         """ Calculate the set level heuristic for the planning graph
@@ -205,8 +216,17 @@ class PlanningGraph:
         -----
         WARNING: you should expect long runtimes using this heuristic on complex problems
         """
-        # TODO: implement setlevel heuristic
-        raise NotImplementedError
+        level_set = 0
+        i = 0
+        while not self._is_leveled:
+            if not all(g in self.literal_layers[-1] for g in self.goal) or any(self.literal_layers[-1].is_mutex(goalA, goalB) for goalB in self.goal for goalA in self.goal):
+                self._extend()
+                i += 1
+            else:
+                level_set = i
+                break
+
+        return level_set
 
     ##############################################################################
     #                     DO NOT MODIFY CODE BELOW THIS LINE                     #
