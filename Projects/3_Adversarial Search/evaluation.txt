@@ -1,0 +1,62 @@
+[HEURISTIC 3] Custom Player v/s SELF
+Running 40 games:
++-++--++++-+-++----+++-+----+-+---++-+--
+Running 40 games:
+-+--+-++-+--++++++---+++-+-+-+++-+++--++
+Your agent won 53.8% of matches against Custom TestAgent
+
+run_all.sh: line 54: s: command not found
+-DEFENSIVE TO OFFENSIVE STRATEGY------------------------------------
+[HEURISTIC 4] Custom Player v/s MINIMAX
+Running 40 games:
++++-++-+-++++---+++++-+-++-+++++------++
+Running 40 games:
+++-+-+++--+-+----++-+--+++++-+++-++-+++-
+Your agent won 61.2% of matches against Minimax Agent
+
+[HEURISTIC 4] Custom Player v/s GREEDY
+Running 40 games:
++++-+++++++-+++++++++-+++++++---++---+++++
+Running 40 games:
++++++++++++-++++++++++-++--+++++++-+++++
+Your agent won 82.5% of matches against Greedy Agent
+
+[HEURISTIC 4] Custom Player v/s RANDOM
+Running 40 games:
+++++++++-++++-++++++++++++++++++++++++++
+Running 40 games:
+++++++++++--++++++++++++++++++-++++++++++
+Your agent won 95.0% of matches against Random Agent
+
+[HEURISTIC 4] Custom Player v/s SELF
+Running 40 games:
++-++--+---+++--+---+-+-++++++-----+--+-+
+Running 40 games:
+-+++++++++-+++--+++++++--++-+-++++--++++--
+Your agent won 60.0% of matches against Custom TestAgent
+
+-BLANK SPACES STRATEGY---------------------------------------------
+[HEURISTIC 5] Custom Player v/s MINIMAX
+Running 40 games:
+--++--++--+-++-+---+---++---+----+---+-+
+Running 40 games:
+-+-+---+-----+-++-++---+-++--+++---+++-+
+Your agent won 41.2% of matches against Minimax Agent
+
+[HEURISTIC 5] Custom Player v/s GREEDY
+Running 40 games:
++-+-++-+++-++++-+++++++--+++-----+--+++-
+Running 40 games:
+-+++--+++-+-++++-----+++--++-+-++++-++++
+Your agent won 62.5% of matches against Greedy Agent
+
+[HEURISTIC 5] Custom Player v/s RANDOM
+Running 40 games:
++++++++++-+++++++++++-++++++-+-++++++++++
+Running 40 games:
+++++-++++-+-++-++-+++++-++++++++++--++-++++
+Your agent won 83.8% of matches against Random Agent
+
+[HEURISTIC 5] Custom Player v/s SELF
+Running 40 games:
+---++----++--+-+-+------++---+-++-+-+

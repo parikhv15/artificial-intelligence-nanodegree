@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class BasePlayer:
-    def __init__(self, player_id):
+    def __init__(self, player_id, heuristic=None):
+        self.TIME_LIMIT = 50
         self.player_id = player_id
         self.timer = None
         self.queue = None
@@ -17,7 +18,7 @@ class BasePlayer:
         self.data = None
 
     def get_action(self, state):
-        """ Implement a function that calls self.queue.put(ACTION) within the allowed time limit 
+        """ Implement a function that calls self.queue.put(ACTION) within the allowed time limit
 
         See RandomPlayer and GreedyPlayer for examples.
         """
@@ -25,8 +26,9 @@ class BasePlayer:
 
 
 class DataPlayer(BasePlayer):
-    def __init__(self, player_id):
+    def __init__(self, player_id, heuristic=None):
         super().__init__(player_id)
+
         try:
             with open("data.pickle", "rb") as f:
                 self.data = pickle.load(f)
@@ -36,7 +38,7 @@ class DataPlayer(BasePlayer):
 
 
 class RandomPlayer(BasePlayer):
-    def get_action(self, state):
+    def get_action(self, state, heuristic=None):
         """ Randomly select a move from the available legal moves.
 
         Parameters
@@ -92,7 +94,7 @@ class MinimaxPlayer(BasePlayer):
 
         This method must call self.queue.put(ACTION) at least once, and may
         call it as many times as you want; the caller is responsible for
-        cutting off the function after the search time limit has expired. 
+        cutting off the function after the search time limit has expired.
 
         **********************************************************************
         NOTE: since the caller is responsible for cutting off search, calling
@@ -132,4 +134,4 @@ class MinimaxPlayer(BasePlayer):
         opp_loc = state.locs[1 - self.player_id]
         own_liberties = state.liberties(own_loc)
         opp_liberties = state.liberties(opp_loc)
-        return len(own_liberties) - len(opp_liberties)
+        return len(own_liberties) - 2*len(opp_liberties)

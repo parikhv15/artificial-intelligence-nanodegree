@@ -91,7 +91,7 @@ class TimedQueue:
 def play(args): return _play(*args)  # multithreading ThreadPool.map doesn't expand args
 
 
-def _play(agents, game_state, time_limit, match_id, debug=False):
+def _play(agents, game_state, time_limit, match_id, debug=False, heuristics=(0,0)):
     """ Run a match between two agents by alternately soliciting them to
     select a move and applying it to advance the game state.
 
@@ -120,7 +120,7 @@ def _play(agents, game_state, time_limit, match_id, debug=False):
     game_history = []
     winner = None
     status = Status.NORMAL
-    players = [a.agent_class(player_id=i) for i, a in enumerate(agents)]
+    players = [t[0].agent_class(player_id=i,heuristic=t[1]) for i, t in enumerate(zip(agents,heuristics))]
     logger.info(GAME_INFO.format(initial_state, *agents))
     while not game_state.terminal_test():
         active_idx = game_state.player()
@@ -175,10 +175,15 @@ def fork_get_action(game_state, active_player, time_limit, debug=False):
         try:
             p = Process(target=_request_action, args=(active_player, action_queue, game_state))
             p.start()
+            # if game_state.player() == 0: print("Process {} started. ".format(p))
             p.join(timeout=PROCESS_TIMEOUT + time_limit / 1000)
+            # if game_state.player() == 0: print("Process {} completed.".format(p))
         finally:
+            # logger.info("Finally block in fork_get_action.")
             if p and p.is_alive(): p.terminate()
+    # print("Action Queue: {}".format(action_queue.qsize()))
     new_context, action = action_queue.get_nowait()  # raises Empty if agent did not respond
+    # print("Got action {} for player {}".format(action, game_state.player()))
     active_player.context = new_context
     return action
 
@@ -192,5 +197,6 @@ def _request_action(agent, queue, game_state):
     try:
         queue.start_timer()
         agent.get_action(game_state)
-    except StopSearch:
+    except StopSearch as e:
+        logger.warn("StopSearch caught in _request_action: {}".format(e))
         pass

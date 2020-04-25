@@ -57,6 +57,7 @@ class Isolation(NamedTuple('Isolation', [('board', int), ('ply_count', int), ('l
         on the board; otherwise an integer.
     """
     def __new__(cls, board=_BLANK_BOARD, ply_count=0, locs=(None, None)):
+        cls.size = _SIZE
         return super(Isolation, cls).__new__(cls, board, ply_count, locs)
 
     def actions(self):
@@ -81,6 +82,14 @@ class Isolation(NamedTuple('Isolation', [('board', int), ('ply_count', int), ('l
         currently holding initiative (i.e., the active player)
         """
         return self.ply_count % 2
+
+    def get_blank_spaces(self):
+        """Return a list of the locations that are still available on the board.
+        """
+        # print("Board: {}".format(self.board))
+        blank_spaces = [_SIZE - i for i in range(_SIZE) if not (1 << i) & self.board]
+        # print("Blank Spaces Inside: {}".format(blank_spaces))
+        return blank_spaces
 
     def result(self, action):
         """ Return the resulting game state after applying the action specified
@@ -207,7 +216,7 @@ class DebugState(Isolation):
     + - + - + - + - + - + - + - + - + - + - + - +
     """
     player_symbols=['1', '2']
-    
+
     @staticmethod
     def from_state(gamestate): return DebugState(gamestate.board, gamestate.ply_count, gamestate.locs)
 
