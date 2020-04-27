@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class BasePlayer:
     def __init__(self, player_id, heuristic=None):
-        self.TIME_LIMIT = 50
+        self.TIME_LIMIT = 500
         self.player_id = player_id
         self.timer = None
         self.queue = None

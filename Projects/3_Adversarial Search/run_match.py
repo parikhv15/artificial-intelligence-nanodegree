@@ -98,6 +98,13 @@ def play_matches(custom_agent, test_agent, cli_args):
     # the first move from each player; these moves are reused in the fair matches
     results = _run_matches(matches, custom_agent.name, cli_args.processes)
 
+    total_depths=[]
+    for result in results:
+        total_depths += result[3]
+
+    print("Average Depth: {}".format(sum(total_depths) / len(total_depths)))
+    print("Time Limit: {}".format(cli_args.time_limit))
+
     if cli_args.fair_matches:
         _matches = make_fair_matches(matches, results)
         results.extend(_run_matches(_matches, custom_agent.name, cli_args.processes))

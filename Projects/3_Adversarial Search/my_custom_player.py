@@ -2,7 +2,6 @@ import time
 import random
 
 from sample_players import DataPlayer
-from heuristics import CustomHeuristic
 
 _HEURISTICS = {
     0: 'defensive_strategy',
@@ -13,6 +12,72 @@ _HEURISTICS = {
     5: 'blank_spaces_strategy',
     6: 'balanced_strategy'
 }
+
+class Heuristic():
+    def score(self, game_state, player_id):
+        raise NotImplementedError
+
+class CustomHeuristic(Heuristic):
+    def __init__(self):
+        pass
+
+    def __get_player_liberties(self, game_state, player_id):
+        loc = game_state.locs[player_id]
+        return game_state.liberties(loc)
+
+    def __get_opponent_liberties(self, game_state, player_id):
+        loc = game_state.locs[[1 - player_id]]
+        return game_state.liberties(loc)
+
+    def __weighted_strategy(self, game_state, player_id, weight_player, weight_opponent):
+        player_moves = self.__get_player_liberties(game_state, player_id)
+        opponent_moves = self.__get_player_liberties(game_state, player_id)
+
+        return (weight_player * len(player_moves)) - (weight_opponent * len(opponent_moves))
+
+    def balanced_strategy(self, game_state, player_id, factor=1):
+        return self.__weighted_strategy(game_state, player_id, factor, factor)
+
+    def defensive_strategy(self, game_state, player_id, factor=2):
+        return self.__weighted_strategy(game_state, player_id, factor, 1)
+
+    def offensive_strategy(self, game_state, player_id, factor=2):
+        return self.__weighted_strategy(game_state, player_id, 1, factor)
+
+    def moves_to_board_strategy(self, game_state, player_id, factor=2):
+        player_moves = self.__get_player_liberties(game_state, player_id)
+        opponent_moves = self.__get_player_liberties(game_state, player_id)
+        round = game_state.ply_count
+        board_size = game_state.size
+
+        return self.__weighted_strategy(game_state, player_id, 2 * round / board_size, 1)
+
+    def offensive_to_defensive_strategy(self, game_state, player_id, factor=2):
+        round = game_state.ply_count
+        board_size = game_state.size
+
+        if round / board_size <= 0.5:
+            return self.offensive_strategy(game_state, player_id, factor)
+        else:
+            return self.defensive_strategy(game_state, player_id, factor)
+
+    def defensive_to_offensive_strategy(self, game_state, player_id, factor=2):
+        round = game_state.ply_count
+        board_size = game_state.size
+
+        if round / board_size > 0.5:
+            return self.offensive_strategy(game_state, player_id, factor)
+        else:
+            return self.defensive_strategy(game_state, player_id, factor)
+
+    def blank_spaces_strategy(self, game_state, player_id, factor=-1.1):
+        player_moves = self.__get_player_liberties(game_state, player_id)
+        opponent_moves = self.__get_player_liberties(game_state, player_id)
+        blank_spaces = game_state.get_blank_spaces()
+
+        num_blank_spaces = len(blank_spaces) if blank_spaces else 0
+
+        return len(player_moves) - (2 * len(opponent_moves)) - (factor**len(blank_spaces))
 
 class CustomPlayer(DataPlayer):
     """ Implement your own agent to play knight's Isolation
@@ -37,8 +102,10 @@ class CustomPlayer(DataPlayer):
 
         heuristic_class = CustomHeuristic()
         heuristic_name = _HEURISTICS[heuristic]
-
         self.heuristic_function = getattr(heuristic_class, heuristic_name)
+        self.context = {
+            'depths': []
+        }
 
     def __time_left(self):
         # print("Checking time left.")
@@ -57,6 +124,17 @@ class CustomPlayer(DataPlayer):
 
     def __time_stop(self):
         self.action_start_time = None
+
+    def average_depth(self):
+        context = self.context if self.context else {}
+        depths = context['depths'] if 'depths' in context else []
+
+        if depths: return sum(depths) / len(depths)
+
+        return 0
+
+    def depths(self):
+        return self.context['depths']
 
     def get_action(self, state):
         """ Employ an adversarial search technique to choose an action
@@ -83,34 +161,37 @@ class CustomPlayer(DataPlayer):
         #          (the timer is automatically managed for you)
         import random
 
-        action = None
         if state.ply_count < 2:
-            action = random.choice(state.actions())
+            self.queue.put(random.choice(state.actions()))
         else:
-            action = self._minimax_iterative_deepening(state)
-
-        self.queue.put(action)
+            self._minimax_iterative_deepening(state)
 
     def _minimax_iterative_deepening(self, state):
         import random
+        from isolation import StopSearch
 
-        # print("[Iterative Deepening] Starting to fetch action for state: {}".format(state))
-        self.__time_start()
-
-        action = random.choice(state.actions())
         depth = 1
-        while self.__time_left():
-            # print("[Iterative Deepening] Running for depth {} and state: {}".format(depth, state))
+        action = random.choice(state.actions())
+        self.context['depths'].append(depth)
+        # self.queue.put(action)
+
+        self.__time_start()
+        while True:
             try:
                 action = self._minimax_alpha_beta_prune(state, depth)
-                depth = depth + 1
-            except SearchTimeout as e:
-                # print(e.message)
-                break
 
-        # self.__time_stop()
-        # print("[Iterative Deepening] Returning action: {} for state: {}".format(action, state))
-        return action
+                if action == float('inf') or action == float('-inf'):
+                    print("stopping..")
+                    break
+
+                depth = depth + 1
+
+                if self.queue.qsize() > 10: self.qsize.get()
+                self.context['depths'][-1] = depth
+                self.queue.put(action)
+            except SearchTimeout as e:
+                break
+        self.__time_stop()
 
     def _minimax_alpha_beta_prune(self, state, depth):
 

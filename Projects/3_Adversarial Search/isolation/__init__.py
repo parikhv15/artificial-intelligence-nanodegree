@@ -157,8 +157,15 @@ def _play(agents, game_state, time_limit, match_id, debug=False, heuristics=(0,0
         if game_state.utility(active_idx) > 0:
             winner, loser = loser, winner  # swap winner/loser if active player won
 
+    from my_custom_player import CustomPlayer
+    depths = []
+    for i, player in enumerate(players):
+        if type(player) is CustomPlayer:
+            # print("Total Number of Depths for Player {}: {}".format(i, player.average_depth()))
+            depths = player.depths()
+
     logger.info(RESULT_INFO.format(status, game_state, game_history, winner, loser))
-    return winner, game_history, match_id
+    return winner, game_history, match_id, depths
 
 
 def fork_get_action(game_state, active_player, time_limit, debug=False):
@@ -198,5 +205,5 @@ def _request_action(agent, queue, game_state):
         queue.start_timer()
         agent.get_action(game_state)
     except StopSearch as e:
-        logger.warn("StopSearch caught in _request_action: {}".format(e))
+        # print("StopSearch caught in _request_action: {}".format(e))
         pass
